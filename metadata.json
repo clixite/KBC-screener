@@ -1,5 +1,7 @@
 {
   "name": "KYC Business Screener",
   "description": "An application to conduct comprehensive AML, KYC, PEP, and financial health screenings for businesses. It identifies the correct company, performs a detailed analysis, and generates an exportable PDF report.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

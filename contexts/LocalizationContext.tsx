@@ -1,28 +1,26 @@
-import React, { createContext, useContext, ReactNode, useState } from 'react';
+import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { translations } from '../translations';
-import { Language } from '../types';
+
+type Language = 'en' | 'es';
+type Translations = typeof translations.en;
 
 interface LocalizationContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => string;
+  t: (key: keyof Translations) => string;
 }
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
 
 export const LocalizationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // FIX: Use state to manage language and provide a `setLanguage` function in the context.
-  // This resolves the error in `LanguageSwitcher` and allows dynamic language changes.
   const [language, setLanguage] = useState<Language>('en');
 
-  const t = (key: string): string => {
-    return translations[language]?.[key] || translations['en'][key] || key;
+  const t = (key: keyof Translations): string => {
+    return (translations[language] && translations[language][key]) || translations.en[key];
   };
 
-  const value = { language, setLanguage, t };
-
   return (
-    <LocalizationContext.Provider value={value}>
+    <LocalizationContext.Provider value={{ language, setLanguage, t }}>
       {children}
     </LocalizationContext.Provider>
   );

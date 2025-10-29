@@ -1,8 +1,10 @@
 import React from 'react';
 import { Company } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
+import { BuildingIcon } from './icons/BuildingIcon';
 import { HashtagIcon } from './icons/HashtagIcon';
 import { MapPinIcon } from './icons/MapPinIcon';
+import { InformationCircleIcon } from './icons/InformationCircleIcon';
 
 interface SelectionStepProps {
   companies: Company[];
@@ -10,71 +12,76 @@ interface SelectionStepProps {
   onBack: () => void;
 }
 
-interface CompanyCardProps {
-  company: Company;
-  onSelect: () => void;
-  isBestMatch: boolean;
-  t: (key: string) => string;
-}
-
-const CompanyCard: React.FC<CompanyCardProps> = ({ company, onSelect, isBestMatch, t }) => (
-    <div className="relative bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-all duration-300 flex flex-col border-2 border-transparent focus-within:border-indigo-500 hover:border-indigo-500">
-        {isBestMatch && (
-            <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-semibold z-10">
-                {t('bestMatch')}
-            </div>
-        )}
-        <div className="p-6 flex flex-col flex-grow">
-            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-100 pr-24">{company.name}</h3>
-            
-            <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300 flex-grow">
-                <div className="flex items-start gap-2">
-                    <HashtagIcon className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
-                    <span><span className="font-medium text-slate-500 dark:text-slate-400">{t('regNumber')}:</span> {company.registrationNumber}</span>
-                </div>
-                <div className="flex items-start gap-2">
-                    <MapPinIcon className="w-4 h-4 mt-0.5 text-slate-400 flex-shrink-0" />
-                    <span>{company.address}</span>
-                </div>
-            </div>
-
-            <button onClick={onSelect} className="w-full text-center px-4 py-2 mt-6 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-800 transition-all">
-                {t('selectCompanyButton')}
-            </button>
-        </div>
-    </div>
-);
-
-
 export const SelectionStep: React.FC<SelectionStepProps> = ({ companies, onSelect, onBack }) => {
-    const { t } = useLocalization();
+  const { t } = useLocalization();
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 sm:p-8 transition-colors">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">{t('selectCompanyTitle')}</h1>
-            <button onClick={onBack} className="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold">
-                {t('backToSearchButton')}
-            </button>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900 p-4 transition-colors">
+      <div className="w-full max-w-4xl">
+        <div className="text-center">
+          <BuildingIcon className="w-16 h-16 mx-auto text-indigo-500" />
+          <h1 className="mt-4 text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-5xl">
+            {t('selectCompanyTitle')}
+          </h1>
+          <p className="mt-4 text-lg text-slate-600 dark:text-slate-300">
+            {t('selectCompanySubtitle')}
+          </p>
         </div>
-        
-        {companies.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {companies.map((comp, index) => (
-                    <CompanyCard 
-                        key={comp.id} 
-                        company={comp} 
-                        onSelect={() => onSelect(comp)} 
-                        isBestMatch={index === 0 && companies.length > 1}
-                        t={t} 
-                    />
-                ))}
+
+        <div className="mt-8">
+          {companies.length > 0 ? (
+            <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {companies.map((company, index) => (
+                <li key={index} 
+                    className="flex flex-col p-5 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:shadow-lg transition-all"
+                >
+                  <div className="flex-grow">
+                    <h2 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">{company.name}</h2>
+                    
+                    {company.description && company.description !== 'N/A' && (
+                       <div className="flex items-start gap-2 mt-3 text-sm text-slate-500 dark:text-slate-400">
+                           <InformationCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                           <p>{company.description}</p>
+                       </div>
+                    )}
+
+                    <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                      <div className="flex items-center gap-2">
+                        <HashtagIcon className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <span>{company.registrationNumber || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <MapPinIcon className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+                        <span>{company.address || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => onSelect(company)}
+                    className="mt-5 w-full px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-800 transition-all"
+                  >
+                    {t('generateReport')}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="text-center p-8 bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+              <InformationCircleIcon className="w-12 h-12 mx-auto text-amber-500" />
+              <h3 className="mt-4 text-xl font-semibold text-slate-800 dark:text-slate-100">{t('noResults')}</h3>
+              <p className="mt-2 text-slate-500 dark:text-slate-400">{t('noResultsHint')}</p>
             </div>
-        ) : (
-            <div className="text-center py-16">
-                <p className="text-slate-600 dark:text-slate-300 text-lg">{t('noCompaniesFound')}</p>
-            </div>
-        )}
+          )}
+        </div>
+
+        <div className="mt-8 text-center">
+          <button
+            onClick={onBack}
+            className="px-6 py-2 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-slate-900 transition-all"
+          >
+            {t('backToSearch')}
+          </button>
+        </div>
       </div>
     </div>
   );
