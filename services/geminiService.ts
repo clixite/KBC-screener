@@ -209,4 +209,53 @@ export const generateComprehensiveReport = async (
     onProgressUpdate('compiling', 'complete');
 
     return report as ComprehensiveReport;
+};// services/geminiService.ts
+
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!API_KEY) {
+  console.warn("Missing VITE_GEMINI_API_KEY, Gemini calls will fail.");
+}
+
+// tu adaptes l’URL à ton modèle Gemini
+const GEMINI_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" +
+  API_KEY;
+
+type GeminiPart = {
+  text: string;
 };
+
+export async function askGemini(prompt: string): Promise<string> {
+  if (!API_KEY) {
+    return "Gemini API key is missing on this deployment.";
+  }
+
+  const body = {
+    contents: [
+      {
+        parts: [{ text: prompt } as GeminiPart],
+      },
+    ],
+  };
+
+  const res = await fetch(GEMINI_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    console.error("Gemini error", await res.text());
+    throw new Error("Gemini call failed");
+  }
+
+  const data = await res.json();
+  const text =
+    data?.candidates?.[0]?.content?.parts?.[0]?.text ??
+    "No response from Gemini";
+
+  return text;
+}
