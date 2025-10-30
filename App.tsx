@@ -1,11 +1,12 @@
+// App.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { SearchStep } from './components/SearchStep';
 import { SelectionStep } from './components/SelectionStep';
 import { NewLoadingStep, ProgressMessage } from './components/NewLoadingStep';
 import { ReportStep } from './components/ReportStep';
 import { ThemeToggle } from './components/ThemeToggle';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
+import type { Translations } from './contexts/LocalizationContext';
 import { searchCompanies, generateComprehensiveReport } from './services/geminiService';
 import { Company, ComprehensiveReport } from './types';
 
@@ -21,9 +22,11 @@ const AppContent: React.FC = () => {
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [report, setReport] = useState<ComprehensiveReport | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<keyof Translations | null>(null);
   const [progressMessages, setProgressMessages] = useState<ProgressMessage[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
 
   const { t } = useLocalization();
 
@@ -37,11 +40,24 @@ const AppContent: React.FC = () => {
       console.error("Could not load search history.", e);
       setSearchHistory([]);
     }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setLocation({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                });
+            },
+            (error) => {
+                console.warn("Could not get user location. Search results may be less relevant.", error);
+            }
+        );
+    }
   }, []);
 
   const addToHistory = useCallback((query: string) => {
     setSearchHistory(prev => {
-      // Add new query to the front, remove duplicates, and limit size
       const newHistory = [
         query,
         ...prev.filter(item => item.toLowerCase() !== query.toLowerCase())
@@ -69,34 +85,42 @@ const AppContent: React.FC = () => {
 
   const handleSearch = useCallback(async (query: string) => {
     if (!query) return;
-    // Prevent re-searching if a search is already in progress for the same query
     if (query === searchQuery && isLoading) return;
 
     setSearchQuery(query);
     setIsLoading(true);
     setError(null);
     try {
-      const results = await searchCompanies(query);
+      const results = await searchCompanies(query, location);
       setCompanies(results);
       setStep('selection');
       addToHistory(query);
     } catch (e: any) {
       console.error(e);
-      setError(e.message || 'genericError');
-      setStep('search'); // Stay on search screen to show error
+      setError((e.message || 'genericError') as keyof Translations);
+      setStep('search');
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, isLoading, addToHistory]);
+  }, [searchQuery, isLoading, addToHistory, location]);
   
   const getInitialProgress = (): ProgressMessage[] => [
+    { key: 'executiveSummary', label: t('progress_exec_summary'), status: 'pending' },
     { key: 'companySummary', label: t('progress_summary'), status: 'pending' },
     { key: 'keyPersonnel', label: t('progress_personnel'), status: 'pending' },
-    { key: 'financialHighlights', label: t('progress_financials'), status: 'pending' },
+    { key: 'beneficialOwnership', label: t('progress_ubo'), status: 'pending' },
+    { key: 'pepScreening', label: t('progress_pep'), status: 'pending' },
+    { key: 'amlRiskAssessment', label: t('progress_aml'), status: 'pending' },
+    { key: 'regulatoryCompliance', label: t('progress_regulatory'), status: 'pending' },
+    { key: 'financialHealthAnalysis', label: t('progress_financials'), status: 'pending' },
     { key: 'marketPresence', label: t('progress_market'), status: 'pending' },
     { key: 'productsAndServices', label: t('progress_products'), status: 'pending' },
     { key: 'strategicAnalysis', label: t('progress_swot'), status: 'pending' },
-    { key: 'compiling', label: t('progress_compiling'), status: 'pending' },
+    { key: 'reputationalRisk', label: t('progress_reputation'), status: 'pending' },
+    { key: 'socialMediaPresence', label: t('progress_social'), status: 'pending' },
+    { key: 'certifications', label: t('progress_certs'), status: 'pending' },
+    { key: 'dueDiligenceReport', label: t('progress_diligence'), status: 'pending' },
+    { key: 'goNoGoAssessment', label: t('progress_goNoGo'), status: 'pending' },
   ];
 
   const handleSelectCompany = async (company: Company) => {
@@ -117,10 +141,7 @@ const AppContent: React.FC = () => {
       setStep('report');
     } catch (e: any) {
       console.error(e);
-      setError(e.message || 'genericError');
-      // If generation fails, we should provide an option to go back
-      // For now, we'll go back to selection, but a better UX could be implemented
-      // on the loading screen itself.
+      setError((e.message || 'genericError') as keyof Translations);
       setStep('selection'); 
     }
   };
@@ -192,7 +213,6 @@ const AppContent: React.FC = () => {
   return (
     <main>
         <div className="absolute top-4 right-4 flex gap-2 z-10">
-            <LanguageSwitcher />
             <ThemeToggle theme={theme} onToggle={toggleTheme} />
         </div>
         {renderStep()}

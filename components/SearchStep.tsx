@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useLocalization } from '../contexts/LocalizationContext';
+import type { Translations } from '../contexts/LocalizationContext';
 import { SearchIcon } from './icons/SearchIcon';
 import { SpinnerIcon } from './icons/SpinnerIcon';
 import { ClockIcon } from './icons/ClockIcon';
 import { TrashIcon } from './icons/TrashIcon';
+import { BuildingIcon } from './icons/BuildingIcon';
 
 interface SearchStepProps {
   onSearch: (query: string) => void;
   isLoading: boolean;
-  error: string | null;
+  // FIX: Ensure the error prop is a valid translation key for type safety.
+  error: keyof Translations | null;
   history: string[];
   onClearHistory: () => void;
 }
@@ -47,6 +50,7 @@ export const SearchStep: React.FC<SearchStepProps> = ({ onSearch, isLoading, err
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900 p-4 transition-colors">
       <div className="w-full max-w-2xl text-center">
+        <BuildingIcon className="w-16 h-16 mx-auto mb-6 text-slate-400 dark:text-slate-500" />
         <h1 className="text-4xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-5xl">
           {t('searchTitle')}
         </h1>

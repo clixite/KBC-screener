@@ -1,26 +1,23 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import { translations } from '../translations';
 
-type Language = 'en' | 'es';
-type Translations = typeof translations.en;
+// FIX: Export the Translations type for use in other components.
+export type Translations = typeof translations.en;
 
 interface LocalizationContextType {
-  language: Language;
-  setLanguage: (language: Language) => void;
   t: (key: keyof Translations) => string;
 }
 
 const LocalizationContext = createContext<LocalizationContextType | undefined>(undefined);
 
 export const LocalizationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('en');
-
   const t = (key: keyof Translations): string => {
-    return (translations[language] && translations[language][key]) || translations.en[key];
+    // Always return the English translation. Fallback to the key itself if not found.
+    return translations.en[key] || key;
   };
 
   return (
-    <LocalizationContext.Provider value={{ language, setLanguage, t }}>
+    <LocalizationContext.Provider value={{ t }}>
       {children}
     </LocalizationContext.Provider>
   );
